@@ -9,7 +9,7 @@ production:
   - echo "Y" |apt-get install libssl-dev
   - apt-get install -y rubygems
   - gem install dpl
-  - dpl --provider=heroku --app=boomerang-api-prd --api-key=$HEROKU_PRODUCTION_API_KEY
+  - dpl --provider=heroku --app=boomerang-api --api-key=$HEROKU_PRODUCTION_API_KEY
   only:
   - master
 stagging:
@@ -19,6 +19,6 @@ stagging:
   - echo "Y" |apt-get install libssl-dev
   - apt-get install -y rubygems
   - gem install dpl
-  - dpl --provider=heroku --app=boomerang-api-stg --api-key=$HEROKU_PRODUCTION_API_KEY
+  - dpl --provider=heroku --app=boomerang-api --api-key=$HEROKU_PRODUCTION_API_KEY
   only:
   - dev

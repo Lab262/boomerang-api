@@ -29,7 +29,7 @@ var api = new ParseServer({
     }),
     template: {
       verification: {
-        subject: "Seu acesso ao +55Lab.Community",
+        subject: "Seu acesso ao Boomerang",
         // Choose one in body and bodyFile, if both setted then body used
         body: "verfication body",
         bodyFile: "./mail/VerificationEmailBody.txt"

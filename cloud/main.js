@@ -18,7 +18,58 @@ function testehuallydfuncao(variavelGAMBIRA) {
     }
 }
 
+
+Parse.Cloud.beforeSave("User", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Chat", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
 Parse.Cloud.beforeSave("Comment", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Evaluation", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Follow", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Friend", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Interested", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Message", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Photo", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Post", function(request, response) {
+  request.object.set("isDeleted", false);
+  response.success();
+});
+
+Parse.Cloud.beforeSave("Scheme", function(request, response) {
   request.object.set("isDeleted", false);
   response.success();
 });

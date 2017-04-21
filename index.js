@@ -21,6 +21,16 @@ var api = new ParseServer({
   serverURL: process.env.SERVER_URL || 'http://localhost:1337/parse',  // Don't forget to change to https if needed
   appName: "Boomerang",
   publicServerURL: "http://localhost:1337/parse",
+  push: {
+    ios:  [
+    {
+      pfx: './push-notifications/lab262.boomerang.dev.p12', // Dev PFX or P12
+      bundleId: 'lab262.boomerang.dev',
+      passphrase: 'lab262boomerang$$$', // optional password to your p12
+      production: false // Dev
+    }
+  ]
+  },
   emailAdapter: MailTemplateAdapter({
 
     adapter: SimpleSendGridAdapter({

@@ -19,6 +19,7 @@ function testehuallydfuncao(variavelGAMBIRA) {
 }
 
 
+
 Parse.Cloud.beforeSave("User", function(request, response) {
   if (request.object.isNew) {
       request.object.set("isDeleted", false);
@@ -89,28 +90,37 @@ Parse.Cloud.beforeSave("Post", function(request, response) {
     response.success();
 });
 
-Parse.Cloud.beforeSave("Scheme", function(request, response) {
+
+// Parse.Cloud.define('editUser', function(request, response) {
+//     var userId = request.params.userId;
+
+//     var User = Parse.Object.extend('_User')
+//     var user = new User({ objectId: userId });
+
+//     var currentUser = request.user;
+
+//     var relation = user.relation("friendsRelation");
+//     relation.add(currentUser);
+
+//     Parse.Cloud.useMasterKey();
+//     user.save().then(function(user) {
+//         response.success(user);
+//     }, function(error) {
+//         response.error(error)
+//     });
+// });
+
+
+
+Parse.Cloud.beforeSave("Evaluation", function(request, response) {
     if (request.object.isNew) {
         request.object.set("isDeleted", false);
     }
+    var schemeId = request.params.scheme.objectId;
+    var Scheme = Parse.object.extend('Scheme');
+    var scheme = new Scheme({objectId: schemeId});
+
+    request.object.set("scheme", scheme);
+
     response.success();
-});
-
-Parse.Cloud.define('editUser', function(request, response) {
-    var userId = request.params.userId;
-
-    var User = Parse.Object.extend('_User'),
-        user = new User({ objectId: userId });
-
-    var currentUser = request.user;
-
-    var relation = user.relation("friendsRelation");
-    relation.add(currentUser);
-
-    Parse.Cloud.useMasterKey();
-    user.save().then(function(user) {
-        response.success(user);
-    }, function(error) {
-        response.error(error)
-    });
 });

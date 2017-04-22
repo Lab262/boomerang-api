@@ -116,11 +116,9 @@ Parse.Cloud.beforeSave("Evaluation", function(request, response) {
     if (request.object.isNew) {
         request.object.set("isDeleted", false);
     }
-    var schemeId = request.params.scheme.objectId;
-    var Scheme = Parse.object.extend('Scheme');
-    var scheme = new Scheme({objectId: schemeId});
-
-    request.object.set("scheme", scheme);
+    
+    var schemePointer = request.scheme
+    request.object.set("scheme", schemePointer);
 
     response.success();
 });

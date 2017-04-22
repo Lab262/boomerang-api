@@ -116,9 +116,8 @@ Parse.Cloud.beforeSave("Evaluation", function(request, response) {
     if (request.object.isNew) {
         request.object.set("isDeleted", false);
     }
-    
-    var schemePointer = request.scheme
-    request.object.set("scheme", schemePointer);
 
+    Parse.Cloud.useMasterKey();
+    
     response.success();
 });

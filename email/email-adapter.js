@@ -11,12 +11,12 @@ var emailAdapter = MailTemplateAdapter({
         subject: "Seu acesso ao Boomerang",
         // Choose one in body and bodyFile, if both setted then body used
         body: "verfication body",
-        bodyFile: "./resources/VerificationEmailBody.txt"
+        bodyFile: "./email/resources/VerificationEmailBody.txt"
       },
       resetPassword: {  // Same as verification
         subject: "reset password subject",
         // body: "<br> <br> <br> reset password body",
-        bodyFile: "./resources/ResetPasswordEmail.txt"
+        bodyFile: "./email/resources/ResetPasswordEmail.txt"
       }
     }
   })

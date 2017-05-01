@@ -37,7 +37,6 @@ function createNotification(notificationColunms, response) {
 
      notification.save({ success: function (newNotification) {
          response.success();
-
          }, error: function (err) {
              response.error("Error: " + error.code + " " + error.message);
          }

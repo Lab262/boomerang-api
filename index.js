@@ -8,13 +8,14 @@ var SimpleSendGridAdapter = require('parse-server-sendgrid-adapter');
 var EmailAdapter = require(path.join(__dirname, '/email/email-adapter'));
 var EmailCustomPages = require(path.join(__dirname, '/email/email-custom-pages'));
 var PushNotificationsAdapter = require(path.join(__dirname, '/push-notifications/push-notifications-adapter'));
+var FileStorageAdapter = require(path.join(__dirname, '/file-storage/file-storage-adapter'));
 
 var databaseUri = process.env.DATABASE_URI || process.env.MONGODB_URI;
 
 if (!databaseUri) {
   console.log('DATABASE_URI not specified, falling back to localhost.');
 }
-
+// console.log(FileStorageAdapter);
 var api = new ParseServer({
   databaseURI: databaseUri || 'mongodb://localhost:27017/dev',
   cloud: process.env.CLOUD_CODE_MAIN || __dirname + '/cloud/main.js',
@@ -25,7 +26,8 @@ var api = new ParseServer({
   publicServerURL: "http://localhost:1337/parse",
   emailAdapter: EmailAdapter,
   customPages:EmailCustomPages,
-  push: PushNotificationsAdapter
+  push: PushNotificationsAdapter,
+  filesAdapter: FileStorageAdapter
 });
 // Client-keys like the javascript key or the .NET key are not necessary with parse-server
 // If you wish you require them, you can set them as options in the initialization above:

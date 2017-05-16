@@ -17,19 +17,40 @@ var allTables = ["Interested", "Comment", "Scheme", "Chat"];
             return request.object.get("author").fetch()
         }).then(function (senderResult) {
             notificationColunms["sender"] = senderResult
-            createNotification(notificationColunms, response);
+            createNotification(notificationColunms, response, "Comentou em seu post.");
+        }, function (err) {
+            response.error("ERROR" + err)
+        });
+    });
+
+    Parse.Cloud.afterSave("Recommended", function(request, response) {
+        var notificationColunms = {};
+        var titlePost;
+        request.object.get("post").fetch().then(function(postResult){
+            notificationColunms["post"] = postResult
+            titlePost = postResult.get("title");
+            return request.object.get("receiver").fetch()
+        }).then(function (receiverResult) {
+            notificationColunms["receiver"] = receiverResult
+            return request.object.get("sender").fetch()
+        }).then(function (senderResult) {
+            notificationColunms["sender"] = senderResult
+            let message = "Recomendou " + titlePost;
+            createNotification(notificationColunms, response, message);
         }, function (err) {
             response.error("ERROR" + err)
         });
     });
 
 
-function createNotification(notificationColunms, response) {
+
+
+function createNotification(notificationColunms, response, message) {
     var NotificationObject =  Parse.Object.extend("Notification");
     var notification = new NotificationObject();
     notificationColunms["hasBeenSeen"] = false;
     notificationColunms["isDeleted"] = false;
-    notificationColunms["notificationDescription"] = "Comentou em seu post."
+    notificationColunms["notificationDescription"] = message
     
      for (colunm in notificationColunms) {
           notification.set(colunm, notificationColunms[colunm]);

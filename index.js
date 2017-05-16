@@ -5,7 +5,9 @@ var express = require('express');
 var ParseServer = require('parse-server').ParseServer;
 var path = require('path');
 var SimpleSendGridAdapter = require('parse-server-sendgrid-adapter');
-var MailTemplateAdapter = require('parse-server-mail-template-adapter');
+var EmailAdapter = require(path.join(__dirname, '/email/email-adapter'));
+var EmailCustomPages = require(path.join(__dirname, '/email/email-custom-pages'));
+var PushNotificationsAdapter = require(path.join(__dirname, '/push-notifications/push-notifications-adapter'));
 
 var databaseUri = process.env.DATABASE_URI || process.env.MONGODB_URI;
 
@@ -21,44 +23,9 @@ var api = new ParseServer({
   serverURL: process.env.SERVER_URL || 'http://localhost:1337/parse',  // Don't forget to change to https if needed
   appName: "Boomerang",
   publicServerURL: "http://localhost:1337/parse",
-  push: {
-    ios:  [
-    {
-      pfx: './push-notifications/lab262.boomerang.dev.p12', // Dev PFX or P12
-      bundleId: 'lab262.boomerang.dev',
-      passphrase: 'lab262boomerang$$$', // optional password to your p12
-      production: false // Dev
-    }
-  ]
-  },
-  emailAdapter: MailTemplateAdapter({
-
-    adapter: SimpleSendGridAdapter({
-      apiKey: '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',
-      fromAddress: 'thiago@lab262.com',
-    }),
-    template: {
-      verification: {
-        subject: "Seu acesso ao Boomerang",
-        // Choose one in body and bodyFile, if both setted then body used
-        body: "verfication body",
-        bodyFile: "./mail/VerificationEmailBody.txt"
-      },
-      resetPassword: {  // Same as verification
-        subject: "reset password subject",
-        // body: "<br> <br> <br> reset password body",
-        bodyFile: "./mail/ResetPasswordEmail.txt"
-      }
-    }
-  }),
-
-  customPages: {
-    // invalidLink: 'http://localhost:1337/invalid_link.html',
-    // verifyEmailSuccess: 'http://localhost:1337/verify_email_success.html',
-    // choosePassword: 'http://localhost:1337/parse/choose_password.html',
-    passwordResetSuccess: 'wwww.google.com'
-  }
-
+  emailAdapter: EmailAdapter,
+  customPages:EmailCustomPages,
+  push: PushNotificationsAdapter
 });
 // Client-keys like the javascript key or the .NET key are not necessary with parse-server
 // If you wish you require them, you can set them as options in the initialization above:

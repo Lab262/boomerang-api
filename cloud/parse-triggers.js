@@ -1,4 +1,4 @@
-var allTables = ["Interested", "Comment", "Scheme", "Chat"];
+var allTables = ["Interested", "Comment", "Scheme", "Chat", "Post"];
     for (i = 0; i < allTables.length; i++) { 
         Parse.Cloud.beforeFind(allTables[i], function(req) {
            let query = req.query;

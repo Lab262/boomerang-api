@@ -27,7 +27,7 @@ var api = new ParseServer({
   customPages:EmailCustomPages,
   push: PushNotificationsAdapter,
   liveQuery: {
-    classNames: ['Comment', 'Chat', 'Message', 'Profile', 'Scheme', 'Interested', 'Notification']
+    classNames: ['Comment', 'Chat', 'Message', 'Profile', 'Scheme', 'Interested', 'Notification', 'Follow']
   }
 });
 // Client-keys like the javascript key or the .NET key are not necessary with parse-server

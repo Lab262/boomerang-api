@@ -1,4 +1,4 @@
-var allTables = ["Interested", "Comment", "Scheme", "Chat", "Post"];
+var allTables = ["Interested", "Comment", "Scheme", "Chat", "Post", "Follow"];
     for (i = 0; i < allTables.length; i++) { 
         Parse.Cloud.beforeFind(allTables[i], function(req) {
            let query = req.query;
@@ -42,9 +42,6 @@ var allTables = ["Interested", "Comment", "Scheme", "Chat", "Post"];
         });
     });
 
-
-
-
 function createNotification(notificationColunms, response, message) {
     var NotificationObject =  Parse.Object.extend("Notification");
     var notification = new NotificationObject();
@@ -63,5 +60,20 @@ function createNotification(notificationColunms, response, message) {
          }
     }); 
 }
+
+Parse.Cloud.define("featuredPosts", function(request, response) {
+  var query = new Parse.Query("Post");
+  query.limit(request.params.pagination);
+  query.include(request.params.include);
+  query.descending('createdAt');
+  query.find({
+    success: function(results) {
+      response.success(results);
+    },
+    error: function() {
+      response.error("Featured Posts Error");
+    }
+  });
+});
 
 

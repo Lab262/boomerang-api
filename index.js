@@ -27,11 +27,11 @@ var api = new ParseServer({
   emailAdapter: EmailAdapter,
   customPages:EmailCustomPages,
   push: PushNotificationsAdapter,
-  filesAdapter: FileStorageAdapter
+  filesAdapter: FileStorageAdapter,
   liveQuery: {
     classNames: ['Comment', 'Chat', 'Message', 'Profile', 'Scheme', 'Interested', 'Notification', 'Follow']
   },
-  allowClientClassCreation: true 
+  allowClientClassCreation: true
 });
 // Client-keys like the javascript key or the .NET key are not necessary with parse-server
 // If you wish you require them, you can set them as options in the initialization above:

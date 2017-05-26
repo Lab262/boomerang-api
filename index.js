@@ -29,7 +29,7 @@ var api = new ParseServer({
   liveQuery: {
     classNames: ['Comment', 'Chat', 'Message', 'Profile', 'Scheme', 'Interested', 'Notification', 'Follow']
   },
-  allowClientClassCreation: true
+  allowClientClassCreation: true 
 });
 // Client-keys like the javascript key or the .NET key are not necessary with parse-server
 // If you wish you require them, you can set them as options in the initialization above:

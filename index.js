@@ -28,6 +28,9 @@ var api = new ParseServer({
   customPages:EmailCustomPages,
   push: PushNotificationsAdapter,
   filesAdapter: FileStorageAdapter
+  liveQuery: {
+    classNames: ['Comment', 'Chat', 'Message', 'Profile', 'Scheme', 'Interested', 'Notification', 'Follow']
+  }
 });
 // Client-keys like the javascript key or the .NET key are not necessary with parse-server
 // If you wish you require them, you can set them as options in the initialization above:
@@ -49,9 +52,12 @@ app.get('/', function (req, res) {
 
 var port = process.env.PORT || 1337;
 var httpServer = require('http').createServer(app);
+ParseServer.createLiveQueryServer(httpServer);
 httpServer.listen(port, function () {
   console.log('parse-server-example running on port ' + port + '.');
 });
+
+
 
 // This will enable the Live Query real-time server
 ParseServer.createLiveQueryServer(httpServer);

@@ -61,8 +61,43 @@ function createNotification(notificationColunms, response, message) {
     }); 
 }
 
+Parse.Cloud.define("like", function(request, response) {
+  var post = new Parse.Object("Post");
+  post.id = request.params.postId;
+  post.increment("likes");
+  post.save(null, { useMasterKey: true }).then(function() {
+    // If I choose to do something else here, it won't be using
+    // the master key and I'll be subject to ordinary security measures.
+    response.success();
+  }, function(error) {
+    response.error(error);
+  });
+});
+
 Parse.Cloud.define("featuredPosts", function(request, response) {
   var query = new Parse.Query("Post");
+
+  query.limit(request.params.pagination[0]);
+  query.include(request.params.include[0]);
+  query.descending('createdAt');
+
+  if (request.params.objectId != undefined) {
+      query.greaterThanOrEqualTo("updatedAt", request.params.updatedAt[0])
+      query.notContainedIn("objectId", request.params.objectId)
+  }
+
+  query.find({
+    success: function(results) {
+      response.success(results);
+    },
+    error: function() {
+      response.error("Featured Posts Error");
+    }
+  });
+});
+
+Parse.Cloud.define("otherUsers", function(request, response) {
+  var query = new Parse.Query("Follow");
 
   query.limit(request.params.pagination[0]);
   query.include(request.params.include[0]);

@@ -7,6 +7,26 @@ for (i = 0; i < allTables.length; i++) {
     });
 }
 
+Parse.Cloud.afterSave("Message", function (request, response) {
+    var notificationColunms = {};
+    request.object.get("post").fetch().then(function (postResult) {
+        notificationColunms["post"] = postResult
+        return postResult.get("author").fetch()
+    }).then(function (receiverResult) {
+        notificationColunms["receiver"] = receiverResult
+        return request.object.get("author").fetch()
+    }).then(function (senderResult) {
+        if (notificationColunms["receiver"]['id'] == senderResult['id'] ) {
+            return
+        }
+        notificationColunms["sender"] = senderResult
+        createNotification(notificationColunms, response, "Comentou em seu post.");
+    }, function (err) {
+        response.error("ERROR" + err)
+    });
+});
+
+
 Parse.Cloud.afterSave("Comment", function (request, response) {
 
     var notificationColunms = {};
@@ -26,6 +46,7 @@ Parse.Cloud.afterSave("Comment", function (request, response) {
         response.error("ERROR" + err)
     });
 });
+
 
 Parse.Cloud.afterSave("Recommended", function (request, response) {
     var notificationColunms = {};
@@ -88,6 +109,36 @@ Parse.Cloud.define("featuredPosts", function (request, response) {
         }
     });
 });
+
+
+
+Parse.Cloud.afterSave("Message", function (request, response) {
+    var messageObject = request.object
+    var receiveUserProfile = messageObject.get('receiver');
+    var receiverUser = new Parse.Query(Parse.User);
+    receiverUser.equalTo("profile", receiveUserProfile);
+    // Find devices associated with these users
+    var pushQuery = new Parse.Query(Parse.Installation);
+    pushQuery.matchesQuery('user', receiverUser);
+    var sender = messageObject.get('sender');
+    sender.fetch().then(function (senderResult) {
+        senderName = senderResult.get("firstName");
+        let notificationDescription = senderName + " " + "te enviou uma mensagem" 
+        Parse.Push.send({
+        where: pushQuery,
+        data: {
+            alert: notificationDescription
+        }
+    }, {
+            useMasterKey: true
+        }).then(function () {
+            response.success();
+        }).catch(function (err) {
+            response.error("ERROR" + err);
+        });
+    });
+});
+
 
 Parse.Cloud.afterSave("Notification", function (request, response) {
     var notificationObject = request.object

@@ -27,6 +27,32 @@ Parse.Cloud.afterSave("Message", function (request, response) {
 });
 
 
+Parse.Cloud.afterSave("Scheme", function (request, response) {
+    var notificationColunms = {};
+    request.object.get("post").fetch().then(function (postResult) {
+        notificationColunms["post"] = postResult
+        return postResult.get("author").fetch()
+    }).then(function (receiverResult) {
+        notificationColunms["receiver"] = receiverResult
+        let post = notificationColunms["post"]
+        return post.get("author").fetch()
+    }).then(function (senderResult) {
+        notificationColunms["sender"] = senderResult
+        return request.object.get("status").fetch()
+    }).then(function (statusResult) {
+       let status = statusResult.get("status")
+       if (status == "Negotiation") {
+           createNotification(notificationColunms, response, "entrou na sua lista de espera");
+       } else if (status == "Progress"){
+           createNotification(notificationColunms, response, "aceitou entrar em um esquema com você!");
+       } else {
+           createNotification(notificationColunms, response, "finalizou um esquema com você");
+       }
+    }, function (err) {
+        response.error("ERROR" + err)
+    });
+});
+
 Parse.Cloud.afterSave("Comment", function (request, response) {
 
     var notificationColunms = {};
@@ -41,7 +67,7 @@ Parse.Cloud.afterSave("Comment", function (request, response) {
             return
         }
         notificationColunms["sender"] = senderResult
-        createNotification(notificationColunms, response, "Comentou em seu post.");
+        createNotification(notificationColunms, response, "comentou em seu post.");
     }, function (err) {
         response.error("ERROR" + err)
     });

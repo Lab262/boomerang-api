@@ -34,8 +34,7 @@ Parse.Cloud.afterSave("Scheme", function (request, response) {
         return postResult.get("author").fetch()
     }).then(function (receiverResult) {
         notificationColunms["receiver"] = receiverResult
-        let post = notificationColunms["post"]
-        return post.get("author").fetch()
+        return request.object.get("requester").fetch()
     }).then(function (senderResult) {
         notificationColunms["sender"] = senderResult
         return request.object.get("status").fetch()

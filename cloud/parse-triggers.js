@@ -53,7 +53,6 @@ Parse.Cloud.afterSave("Scheme", function (request, response) {
 });
 
 Parse.Cloud.afterSave("Comment", function (request, response) {
-
     var notificationColunms = {};
     request.object.get("post").fetch().then(function (postResult) {
         notificationColunms["post"] = postResult
@@ -132,7 +131,6 @@ Parse.Cloud.define("featuredPosts", function(request, response) {
 
 Parse.Cloud.define("featuredPosts", function (request, response) {
     var query = new Parse.Query("Post");
-
     query.limit(request.params.pagination[0]);
     query.include(request.params.include[0]);
     query.descending('createdAt');
@@ -153,7 +151,63 @@ Parse.Cloud.define("featuredPosts", function (request, response) {
     });
 });
 
+Parse.Cloud.afterSave("Interested", function (request, response) {
+    var interestedObject = request.object;
+    if (interestedObject.get("isDeleted") != true) {
+        createChat(interestedObject);
+    } else {
+        return
+    }
+});
 
+function createChat(interested) {
+    var ChatObject = Parse.Object.extend("Chat");
+    var chat = new ChatObject();
+    chat.set("requester", interested.get("user"));
+    chat.set("post", interested.get("post"));
+
+    interested.get("post").fetch().then(function (postResult) {
+        return postResult.get("author").fetch()
+    }).then(function (authorResult) {
+         chat.set("owner", authorResult)
+         chat.save({
+            success: function(newChat) {
+                createScheme(newChat)
+            }, error: function (err) {
+                response.error("Error: " + error.code + " " + error.message);
+            }
+        });
+    }, function (err) {
+        response.error("ERROR" + err)
+    });
+}
+
+var fetchStatus = function(status) {
+    var query = new Parse.Query("SchemeStatus");
+    query.equalTo("status", status);
+    return query.find();
+};
+
+
+function createScheme(chat) {
+    var SchemeObject = Parse.Object.extend("Scheme");
+    var scheme = new SchemeObject();
+    scheme.set("owner", chat.get("owner"));
+    scheme.set("requester", chat.get("requester"));
+    scheme.set("post", chat.get("post"));
+    scheme.set("chat", chat);
+
+    fetchStatus("Negotiation").then(function(status) {
+        scheme.set("status", status[0])
+         scheme.save({
+            success: function(newScheme) {
+              response.success(newScheme);
+            }, error: function (err) {
+              response.error("Error: " + error.code + " " + error.message);
+            }
+       });
+    });
+}
 
 Parse.Cloud.afterSave("Message", function (request, response) {
     var messageObject = request.object

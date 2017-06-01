@@ -1,66 +1,59 @@
 var allTables = ["Interested", "Comment", "Scheme", "Chat", "Post", "Follow"];
-    for (i = 0; i < allTables.length; i++) { 
-        Parse.Cloud.beforeFind(allTables[i], function(req) {
-           let query = req.query;
-           query.containedIn("isDeleted", [false, null]);
-           return query
-        });
-    }
-
-    Parse.Cloud.afterSave("Comment", function(request, response) {
-        var notificationColunms = {};
-        request.object.get("post").fetch().then(function(postResult){
-            notificationColunms["post"] = postResult
-            return postResult.get("author").fetch()
-        }).then(function (receiverResult) {
-            notificationColunms["receiver"] = receiverResult
-            return request.object.get("author").fetch()
-        }).then(function (senderResult) {
-            notificationColunms["sender"] = senderResult
-            createNotification(notificationColunms, response, "Comentou em seu post.");
-        }, function (err) {
-            response.error("ERROR" + err)
-        });
+for (i = 0; i < allTables.length; i++) {
+    Parse.Cloud.beforeFind(allTables[i], function (req) {
+        let query = req.query;
+        query.containedIn("isDeleted", [false, null]);
+        return query
     });
+}
 
-    Parse.Cloud.afterSave("Recommended", function(request, response) {
-        var notificationColunms = {};
-        var titlePost;
-        request.object.get("post").fetch().then(function(postResult){
-            notificationColunms["post"] = postResult
-            titlePost = postResult.get("title");
-            return request.object.get("receiver").fetch()
-        }).then(function (receiverResult) {
-            notificationColunms["receiver"] = receiverResult
-            return request.object.get("sender").fetch()
-        }).then(function (senderResult) {
-            notificationColunms["sender"] = senderResult
-            let message = "Recomendou " + titlePost;
-            createNotification(notificationColunms, response, message);
-        }, function (err) {
-            response.error("ERROR" + err)
-        });
+Parse.Cloud.afterSave("Comment", function (request, response) {
+    var notificationColunms = {};
+    request.object.get("post").fetch().then(function (postResult) {
+        notificationColunms["post"] = postResult
+        return postResult.get("author").fetch()
+    }).then(function (receiverResult) {
+        notificationColunms["receiver"] = receiverResult
+        return request.object.get("author").fetch()
+    }).then(function (senderResult) {
+        notificationColunms["sender"] = senderResult
+        createNotification(notificationColunms, response, "Comentou em seu post.");
+    }, function (err) {
+        response.error("ERROR" + err)
     });
+});
+
+Parse.Cloud.afterSave("Recommended", function (request, response) {
+    var notificationColunms = {};
+    var titlePost;
+    request.object.get("post").fetch().then(function (postResult) {
+        notificationColunms["post"] = postResult
+        titlePost = postResult.get("title");
+        return request.object.get("receiver").fetch()
+    }).then(function (receiverResult) {
+        notificationColunms["receiver"] = receiverResult
+        return request.object.get("sender").fetch()
+    }).then(function (senderResult) {
+        notificationColunms["sender"] = senderResult
+        let message = "Recomendou " + titlePost;
+        createNotification(notificationColunms, response, message);
+    }, function (err) {
+        response.error("ERROR" + err)
+    });
+});
 
 function createNotification(notificationColunms, response, message) {
-    var NotificationObject =  Parse.Object.extend("Notification");
+    var NotificationObject = Parse.Object.extend("Notification");
     var notification = new NotificationObject();
     notificationColunms["hasBeenSeen"] = false;
     notificationColunms["isDeleted"] = false;
     notificationColunms["notificationDescription"] = message
-    
-     for (colunm in notificationColunms) {
-          notification.set(colunm, notificationColunms[colunm]);
-     }
 
-     notification.save({ success: function (newNotification) {
-         response.success();
-         }, error: function (err) {
-             response.error("Error: " + error.code + " " + error.message);
-         }
-    }); 
-}
+    for (colunm in notificationColunms) {
+        notification.set(colunm, notificationColunms[colunm]);
+    }
 
+<<<<<<< HEAD
 Parse.Cloud.define("like", function(request, response) {
   var post = new Parse.Object("Post");
   post.id = request.params.postId;
@@ -76,24 +69,60 @@ Parse.Cloud.define("like", function(request, response) {
 
 Parse.Cloud.define("featuredPosts", function(request, response) {
   var query = new Parse.Query("Post");
+=======
+    notification.save({
+        success: function (newNotification) {
+            response.success();
+        }, error: function (err) {
+            response.error("Error: " + error.code + " " + error.message);
+        }
+    });
+}
+>>>>>>> 068a7d16f45379c1513b9cf61fd6753cfdb115bc
 
-  query.limit(request.params.pagination[0]);
-  query.include(request.params.include[0]);
-  query.descending('createdAt');
+Parse.Cloud.define("featuredPosts", function (request, response) {
+    var query = new Parse.Query("Post");
 
-  if (request.params.objectId != undefined) {
-      query.greaterThanOrEqualTo("updatedAt", request.params.updatedAt[0])
-      query.notContainedIn("objectId", request.params.objectId)
-  }
+    query.limit(request.params.pagination[0]);
+    query.include(request.params.include[0]);
+    query.descending('createdAt');
 
-  query.find({
-    success: function(results) {
-      response.success(results);
-    },
-    error: function() {
-      response.error("Featured Posts Error");
+    if (request.params.objectId != undefined) {
+        query.greaterThanOrEqualTo("updatedAt", request.params.updatedAt[0])
+        query.notContainedIn("objectId", request.params.objectId)
     }
-  });
+
+    query.find({
+        success: function (results) {
+            response.success(results);
+        },
+        error: function () {
+            response.error("Featured Posts Error");
+        }
+    });
+});
+
+Parse.Cloud.afterSave("Notification", function (request, response) {
+    var notificationObject = request.object
+    var receiveUserProfile = notificationObject.get('receiver');
+    var receiverUser = new Parse.Query(Parse.User);
+    receiverUser.equalTo("profile", receiver);
+    // Find devices associated with these users
+    var pushQuery = new Parse.Query(Parse.Installation);
+    pushQuery.matchesQuery('user', receiverUser);
+
+    Parse.Push.send({
+        where: pushQuery,
+        data: {
+            alert: notificationObject.get('notificationDescription')
+        }
+    }, {
+            useMasterKey: true
+        }).then(function () {
+            response.success();
+        }).catch(function (err) {
+            response.error("ERROR" + err);
+        });
 });
 
 Parse.Cloud.define("otherUsers", function(request, response) {

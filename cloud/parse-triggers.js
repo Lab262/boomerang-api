@@ -28,6 +28,12 @@ Parse.Cloud.afterSave("Message", function (request, response) {
 
 
 Parse.Cloud.afterSave("Scheme", function (request, response) {
+    var schemeObject = request.object;
+
+    if (schemeObject.get("isDeleted") == true) {
+        return
+    }
+
     var notificationColunms = {};
     request.object.get("post").fetch().then(function (postResult) {
         notificationColunms["post"] = postResult
@@ -102,23 +108,6 @@ function createNotification(notificationColunms, response, message) {
         notification.set(colunm, notificationColunms[colunm]);
     }
 
-<<<<<<< HEAD
-Parse.Cloud.define("like", function(request, response) {
-  var post = new Parse.Object("Post");
-  post.id = request.params.postId;
-  post.increment("likes");
-  post.save(null, { useMasterKey: true }).then(function() {
-    // If I choose to do something else here, it won't be using
-    // the master key and I'll be subject to ordinary security measures.
-    response.success();
-  }, function(error) {
-    response.error(error);
-  });
-});
-
-Parse.Cloud.define("featuredPosts", function(request, response) {
-  var query = new Parse.Query("Post");
-=======
     notification.save({
         success: function (newNotification) {
             response.success();
@@ -127,7 +116,6 @@ Parse.Cloud.define("featuredPosts", function(request, response) {
         }
     });
 }
->>>>>>> 068a7d16f45379c1513b9cf61fd6753cfdb115bc
 
 Parse.Cloud.define("featuredPosts", function (request, response) {
     var query = new Parse.Query("Post");
@@ -156,9 +144,29 @@ Parse.Cloud.afterSave("Interested", function (request, response) {
     if (interestedObject.get("isDeleted") != true) {
         createChat(interestedObject);
     } else {
-        return
+        let post = interestedObject.get("post");
+        let owner = interestedObject.get("owner");
+        let requester = interestedObject.get("requester");
+        let chat = interestedObject.get("chat");
+        fetchScheme(post, owner, requester).then(function(scheme) {
+             return updateObjectForDelete(scheme[0]);
+        }).then(function (success) {
+            return updateObjectForDelete(chat);
+        }).then(function(success) {
+            response.success(success);
+        },function (err) {
+            response.error("ERROR" + err)
+
+        });
     }
 });
+
+var updateObjectForDelete = function(object) {
+    object.set("isDeleted", true)
+    return object.save();
+};
+
+
 
 function createChat(interested) {
     var ChatObject = Parse.Object.extend("Chat");
@@ -185,6 +193,15 @@ function createChat(interested) {
 var fetchStatus = function(status) {
     var query = new Parse.Query("SchemeStatus");
     query.equalTo("status", status);
+    return query.find();
+};
+
+var fetchScheme = function(post, owner, requester) {
+    var query = new Parse.Query("Scheme");
+    query.equalTo("post", post);
+    query.equalTo("owner", owner);
+    query.equalTo("requester", requester)
+    
     return query.find();
 };
 

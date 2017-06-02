@@ -144,11 +144,13 @@ Parse.Cloud.afterSave("Interested", function (request, response) {
     if (interestedObject.get("isDeleted") != true) {
         createChat(interestedObject);
     } else {
-        let post = interestedObject.get("post");
-        let owner = interestedObject.get("owner");
-        let requester = interestedObject.get("requester");
-        let chat = interestedObject.get("chat");
-        fetchScheme(post, owner, requester).then(function(scheme) {
+        let requester = interestedObject.get("user");
+        var chat;
+        
+        request.object.get("post").fetch().then(function (postResult) {
+            return fetchScheme(postResult, postResult.get("author"), requester);
+        }).then(function(scheme) {
+             chat = scheme[0].get("chat");
              return updateObjectForDelete(scheme[0]);
         }).then(function (success) {
             return updateObjectForDelete(chat);
@@ -196,15 +198,15 @@ var fetchStatus = function(status) {
     return query.find();
 };
 
+
 var fetchScheme = function(post, owner, requester) {
     var query = new Parse.Query("Scheme");
     query.equalTo("post", post);
     query.equalTo("owner", owner);
     query.equalTo("requester", requester)
-    
+
     return query.find();
 };
-
 
 function createScheme(chat) {
     var SchemeObject = Parse.Object.extend("Scheme");

@@ -1,4 +1,4 @@
-var allTables = ["Interested", "Comment", "Scheme", "Chat", "Post", "Follow"];
+var allTables = ["Interested", "Comment", "Scheme", "Chat", "Post", "Follow", "Message", "Notification", "Recommended"];
 for (i = 0; i < allTables.length; i++) {
     Parse.Cloud.beforeFind(allTables[i], function (req) {
         let query = req.query;
@@ -7,50 +7,41 @@ for (i = 0; i < allTables.length; i++) {
     });
 }
 
-Parse.Cloud.afterSave("Message", function (request, response) {
-    var notificationColunms = {};
-    request.object.get("post").fetch().then(function (postResult) {
-        notificationColunms["post"] = postResult
-        return postResult.get("author").fetch()
-    }).then(function (receiverResult) {
-        notificationColunms["receiver"] = receiverResult
-        return request.object.get("author").fetch()
-    }).then(function (senderResult) {
-        if (notificationColunms["receiver"]['id'] == senderResult['id'] ) {
-            return
-        }
-        notificationColunms["sender"] = senderResult
-        createNotification(notificationColunms, response, "Comentou em seu post.");
-    }, function (err) {
-        response.error("ERROR" + err)
-    });
-});
-
 
 Parse.Cloud.afterSave("Scheme", function (request, response) {
     var schemeObject = request.object;
-
     if (schemeObject.get("isDeleted") == true) {
         return
     }
 
     var notificationColunms = {};
+    var receiver;
+    var sender;
+        
     request.object.get("post").fetch().then(function (postResult) {
         notificationColunms["post"] = postResult
         return postResult.get("author").fetch()
     }).then(function (receiverResult) {
+        receiver = receiverResult
         notificationColunms["receiver"] = receiverResult
         return request.object.get("requester").fetch()
     }).then(function (senderResult) {
+        sender = senderResult
         notificationColunms["sender"] = senderResult
         return request.object.get("status").fetch()
     }).then(function (statusResult) {
        let status = statusResult.get("status")
        if (status == "Negotiation") {
            createNotification(notificationColunms, response, "entrou na sua lista de espera");
-       } else if (status == "Progress"){
+       } else if (status == "Progress") {
+           notificationColunms["receiver"] = sender
+           notificationColunms["sender"] = receiver
+           notificationColunms["scheme"] = request.object;
            createNotification(notificationColunms, response, "aceitou entrar em um esquema com você!");
        } else {
+           notificationColunms["receiver"] = sender
+           notificationColunms["sender"] = receiver
+           notificationColunms["scheme"] = request.object;
            createNotification(notificationColunms, response, "finalizou um esquema com você");
        }
     }, function (err) {
@@ -59,6 +50,11 @@ Parse.Cloud.afterSave("Scheme", function (request, response) {
 });
 
 Parse.Cloud.afterSave("Comment", function (request, response) {
+    var commentObject = request.object;
+    if (commentObject.get("isDeleted") == true) {
+        return
+    }
+
     var notificationColunms = {};
     request.object.get("post").fetch().then(function (postResult) {
         notificationColunms["post"] = postResult
@@ -79,6 +75,10 @@ Parse.Cloud.afterSave("Comment", function (request, response) {
 
 
 Parse.Cloud.afterSave("Recommended", function (request, response) {
+    var recommendedObject = request.object;
+    if (recommendedObject.get("isDeleted") == true) {
+        return
+    }
     var notificationColunms = {};
     var titlePost;
     request.object.get("post").fetch().then(function (postResult) {
@@ -146,7 +146,7 @@ Parse.Cloud.afterSave("Interested", function (request, response) {
     } else {
         let requester = interestedObject.get("user");
         var chat;
-        
+
         request.object.get("post").fetch().then(function (postResult) {
             return fetchScheme(postResult, postResult.get("author"), requester);
         }).then(function(scheme) {
@@ -204,7 +204,6 @@ var fetchScheme = function(post, owner, requester) {
     query.equalTo("post", post);
     query.equalTo("owner", owner);
     query.equalTo("requester", requester)
-
     return query.find();
 };
 
@@ -230,6 +229,11 @@ function createScheme(chat) {
 
 Parse.Cloud.afterSave("Message", function (request, response) {
     var messageObject = request.object
+
+    if (messageObject.get("isDeleted") == true) {
+        return
+    }
+    
     var receiveUserProfile = messageObject.get('receiver');
     var receiverUser = new Parse.Query(Parse.User);
     receiverUser.equalTo("profile", receiveUserProfile);
@@ -258,6 +262,9 @@ Parse.Cloud.afterSave("Message", function (request, response) {
 
 Parse.Cloud.afterSave("Notification", function (request, response) {
     var notificationObject = request.object
+    if (notificationObject.get("isDeleted") == true) {
+        return
+    }
     var receiveUserProfile = notificationObject.get('receiver');
     var receiverUser = new Parse.Query(Parse.User);
     receiverUser.equalTo("profile", receiveUserProfile);

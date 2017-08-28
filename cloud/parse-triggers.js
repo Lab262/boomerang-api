@@ -17,7 +17,7 @@ Parse.Cloud.afterSave("Scheme", function (request, response) {
     var notificationColunms = {};
     var receiver;
     var sender;
-        
+
     request.object.get("post").fetch().then(function (postResult) {
         notificationColunms["post"] = postResult
         return postResult.get("author").fetch()
@@ -30,20 +30,20 @@ Parse.Cloud.afterSave("Scheme", function (request, response) {
         notificationColunms["sender"] = senderResult
         return request.object.get("status").fetch()
     }).then(function (statusResult) {
-       let status = statusResult.get("status")
-       if (status == "Negotiation") {
-           createNotification(notificationColunms, response, "entrou na sua lista de espera");
-       } else if (status == "Progress") {
-           notificationColunms["receiver"] = sender
-           notificationColunms["sender"] = receiver
-           notificationColunms["scheme"] = request.object;
-           createNotification(notificationColunms, response, "aceitou entrar em um esquema com você!");
-       } else {
-           notificationColunms["receiver"] = sender
-           notificationColunms["sender"] = receiver
-           notificationColunms["scheme"] = request.object;
-           createNotification(notificationColunms, response, "finalizou um esquema com você");
-       }
+        let status = statusResult.get("status")
+        if (status == "Negotiation") {
+            createNotification(notificationColunms, response, "entrou na sua lista de espera");
+        } else if (status == "Progress") {
+            notificationColunms["receiver"] = sender
+            notificationColunms["sender"] = receiver
+            notificationColunms["scheme"] = request.object;
+            createNotification(notificationColunms, response, "aceitou entrar em um esquema com você!");
+        } else {
+            notificationColunms["receiver"] = sender
+            notificationColunms["sender"] = receiver
+            notificationColunms["scheme"] = request.object;
+            createNotification(notificationColunms, response, "finalizou um esquema com você");
+        }
     }, function (err) {
         response.error("ERROR" + err)
     });
@@ -63,7 +63,7 @@ Parse.Cloud.afterSave("Comment", function (request, response) {
         notificationColunms["receiver"] = receiverResult
         return request.object.get("author").fetch()
     }).then(function (senderResult) {
-        if (notificationColunms["receiver"]['id'] == senderResult['id'] ) {
+        if (notificationColunms["receiver"]['id'] == senderResult['id']) {
             return
         }
         notificationColunms["sender"] = senderResult
@@ -117,6 +117,26 @@ function createNotification(notificationColunms, response, message) {
     });
 }
 
+Parse.Cloud.define("likePost", function (request, response) {
+    var postObject;
+    fetchPost(request.params.postId).then(function (post) {
+        postObject = post[0];
+        return fetchProfile(request.params.profileId)
+    }).then(function (profile) {
+        var Like = Parse.Object.extend("Like");
+        var like = new Like();
+        like.set("post", postObject);
+        like.set("profile", profile[0]);
+        like.save({
+            success: function (newNotification) {
+                response.success();
+            }, error: function (err) {
+                response.error("Error: " + error.code + " " + error.message);
+            }
+        });
+    });
+});
+
 Parse.Cloud.define("featuredPosts", function (request, response) {
     var query = new Parse.Query("Post");
     query.limit(request.params.pagination[0]);
@@ -149,26 +169,24 @@ Parse.Cloud.afterSave("Interested", function (request, response) {
 
         request.object.get("post").fetch().then(function (postResult) {
             return fetchScheme(postResult, postResult.get("author"), requester);
-        }).then(function(scheme) {
-             chat = scheme[0].get("chat");
-             return updateObjectForDelete(scheme[0]);
+        }).then(function (scheme) {
+            chat = scheme[0].get("chat");
+            return updateObjectForDelete(scheme[0]);
         }).then(function (success) {
             return updateObjectForDelete(chat);
-        }).then(function(success) {
+        }).then(function (success) {
             response.success(success);
-        },function (err) {
+        }, function (err) {
             response.error("ERROR" + err)
 
         });
     }
 });
 
-var updateObjectForDelete = function(object) {
+var updateObjectForDelete = function (object) {
     object.set("isDeleted", true)
     return object.save();
 };
-
-
 
 function createChat(interested) {
     var ChatObject = Parse.Object.extend("Chat");
@@ -179,9 +197,9 @@ function createChat(interested) {
     interested.get("post").fetch().then(function (postResult) {
         return postResult.get("author").fetch()
     }).then(function (authorResult) {
-         chat.set("owner", authorResult)
-         chat.save({
-            success: function(newChat) {
+        chat.set("owner", authorResult)
+        chat.save({
+            success: function (newChat) {
                 createScheme(newChat)
             }, error: function (err) {
                 response.error("Error: " + error.code + " " + error.message);
@@ -192,18 +210,30 @@ function createChat(interested) {
     });
 }
 
-var fetchStatus = function(status) {
+var fetchStatus = function (status) {
     var query = new Parse.Query("SchemeStatus");
     query.equalTo("status", status);
     return query.find();
 };
 
 
-var fetchScheme = function(post, owner, requester) {
+var fetchScheme = function (post, owner, requester) {
     var query = new Parse.Query("Scheme");
     query.equalTo("post", post);
     query.equalTo("owner", owner);
     query.equalTo("requester", requester)
+    return query.find();
+};
+
+var fetchPost = function (postId) {
+    var query = new Parse.Query("Post");
+    query.equalTo("objectId", postId);
+    return query.find();
+};
+
+var fetchProfile = function (profileId) {
+    var query = new Parse.Query("Profile");
+    query.equalTo("objectId", profileId);
     return query.find();
 };
 
@@ -215,15 +245,15 @@ function createScheme(chat) {
     scheme.set("post", chat.get("post"));
     scheme.set("chat", chat);
 
-    fetchStatus("Negotiation").then(function(status) {
+    fetchStatus("Negotiation").then(function (status) {
         scheme.set("status", status[0])
-         scheme.save({
-            success: function(newScheme) {
-              response.success(newScheme);
+        scheme.save({
+            success: function (newScheme) {
+                response.success(newScheme);
             }, error: function (err) {
-              response.error("Error: " + error.code + " " + error.message);
+                response.error("Error: " + error.code + " " + error.message);
             }
-       });
+        });
     });
 }
 
@@ -233,7 +263,7 @@ Parse.Cloud.afterSave("Message", function (request, response) {
     if (messageObject.get("isDeleted") == true) {
         return
     }
-    
+
     var receiveUserProfile = messageObject.get('receiver');
     var receiverUser = new Parse.Query(Parse.User);
     receiverUser.equalTo("profile", receiveUserProfile);
@@ -243,19 +273,19 @@ Parse.Cloud.afterSave("Message", function (request, response) {
     var sender = messageObject.get('sender');
     sender.fetch().then(function (senderResult) {
         senderName = senderResult.get("firstName");
-        let notificationDescription = senderName + " " + "te enviou uma mensagem" 
+        let notificationDescription = senderName + " " + "te enviou uma mensagem"
         Parse.Push.send({
-        where: pushQuery,
-        data: {
-            alert: notificationDescription
-        }
-    }, {
-            useMasterKey: true
-        }).then(function () {
-            response.success();
-        }).catch(function (err) {
-            response.error("ERROR" + err);
-        });
+            where: pushQuery,
+            data: {
+                alert: notificationDescription
+            }
+        }, {
+                useMasterKey: true
+            }).then(function () {
+                response.success();
+            }).catch(function (err) {
+                response.error("ERROR" + err);
+            });
     });
 });
 
@@ -274,42 +304,42 @@ Parse.Cloud.afterSave("Notification", function (request, response) {
     var sender = notificationObject.get('sender');
     sender.fetch().then(function (senderResult) {
         senderName = senderResult.get("firstName");
-        let notificationDescription = senderName + " " + notificationObject.get('notificationDescription') 
+        let notificationDescription = senderName + " " + notificationObject.get('notificationDescription')
         Parse.Push.send({
-        where: pushQuery,
-        data: {
-            alert: notificationDescription
-        }
-    }, {
-            useMasterKey: true
-        }).then(function () {
-            response.success();
-        }).catch(function (err) {
-            response.error("ERROR" + err);
-        });
+            where: pushQuery,
+            data: {
+                alert: notificationDescription
+            }
+        }, {
+                useMasterKey: true
+            }).then(function () {
+                response.success();
+            }).catch(function (err) {
+                response.error("ERROR" + err);
+            });
     });
 });
 
-Parse.Cloud.define("otherUsers", function(request, response) {
-  var query = new Parse.Query("Follow");
+Parse.Cloud.define("otherUsers", function (request, response) {
+    var query = new Parse.Query("Follow");
 
-  query.limit(request.params.pagination[0]);
-  query.include(request.params.include[0]);
-  query.descending('createdAt');
+    query.limit(request.params.pagination[0]);
+    query.include(request.params.include[0]);
+    query.descending('createdAt');
 
-  if (request.params.objectId != undefined) {
-      query.greaterThanOrEqualTo("updatedAt", request.params.updatedAt[0])
-      query.notContainedIn("objectId", request.params.objectId)
-  }
-
-  query.find({
-    success: function(results) {
-      response.success(results);
-    },
-    error: function() {
-      response.error("Featured Posts Error");
+    if (request.params.objectId != undefined) {
+        query.greaterThanOrEqualTo("updatedAt", request.params.updatedAt[0])
+        query.notContainedIn("objectId", request.params.objectId)
     }
-  });
+
+    query.find({
+        success: function (results) {
+            response.success(results);
+        },
+        error: function () {
+            response.error("Featured Posts Error");
+        }
+    });
 });
 
 // Parse.Cloud.define("averageStars", function(request, response) {

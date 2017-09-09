@@ -17,7 +17,7 @@ if (!databaseUri) {
 }
 // console.log(FileStorageAdapter);
 var api = new ParseServer({
-  databaseURI: databaseUri || 'mongodb://localhost:27017/dev',
+  databaseURI: databaseUri || 'mongodb://heroku_qp6npbjk:cce6ao8d9di6on7j9sqcjgeh3u@ds157539.mlab.com:57539/heroku_qp6npbjk',
   cloud: process.env.CLOUD_CODE_MAIN || __dirname + '/cloud/main.js',
   appId: process.env.APP_ID || 'myAppId',
   masterKey: process.env.MASTER_KEY || 'myMasterKey', //Add your master key here. Keep it secret!

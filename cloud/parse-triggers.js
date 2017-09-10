@@ -342,6 +342,31 @@ Parse.Cloud.define("otherUsers", function (request, response) {
     });
 });
 
+Parse.Cloud.define("validatePromoCode", function (request, response) {
+    var requestedPromoCode = request.params.promoCode
+    var PromoCode = Parse.Object.extend("PromoCode");
+    var UserPromoCode = Parse.Object.extend("UserPromoCodes");
+    var innerQuery = new Parse.Query(PromoCode);
+    innerQuery.equalTo("code", requestedPromoCode);
+    var query = new Parse.Query(UserPromoCode);
+    query.matchesQuery("promoCodePointer", innerQuery);    
+    query.find({
+      success: function(userPromoCodes) {
+        if (userPromoCodes.length > 0 ) {
+            var userPromoCode = userPromoCodes[0];
+            var userGuestPointer = userPromoCode.get("userGuestPointer");
+            if (userGuestPointer != undefined) {
+                response.success({isValid: false, msg: "Outro migo já usou esse código"});
+            } else {
+                response.success({isValid: true});                
+            }
+        } else {
+            response.success({isValid: false, msg: "Este código não existe"});
+        }
+      }
+    });
+});
+
 // Parse.Cloud.define("averageStars", function(request, response) {
 //   var query = new Parse.Query("Evaluation");
 //   query.equalTo("movie", request.params.movie);

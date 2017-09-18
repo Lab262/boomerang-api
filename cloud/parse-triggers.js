@@ -370,7 +370,7 @@ Parse.Cloud.define("validatePromoCode", function (request, response) {
 Parse.Cloud.define("averageStars", function(request, response) {
   fetchProfile(request.params.profileId).then(function (profile) {
       var query = new Parse.Query("Evaluation");
-      query.equalTo("evaluated", profile);
+      query.equalTo("evaluated", profile[0]);
       query.find({
          success: function(results) {
          var sum = 0;

@@ -10,7 +10,8 @@ for (i = 0; i < allTables.length; i++) {
 
 Parse.Cloud.afterSave("Scheme", function (request, response) {
     var schemeObject = request.object;
-    if (schemeObject.get("isDeleted") == true) {
+
+    if (schemeObject.get("isDeleted") == true || schemeObject.get("showNotification") == false) {
         return
     }
 
@@ -37,7 +38,7 @@ Parse.Cloud.afterSave("Scheme", function (request, response) {
             notificationColunms["receiver"] = sender
             notificationColunms["sender"] = receiver
             notificationColunms["scheme"] = request.object;
-            createNotification(notificationColunms, response, "aceitou entrar em um esquema com você!");
+            createNotification(notificationColunms, response, "aceitou entrar em um esquema com você");
         } else {
             notificationColunms["receiver"] = sender
             notificationColunms["sender"] = receiver

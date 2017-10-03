@@ -160,30 +160,6 @@ Parse.Cloud.define("featuredPosts", function (request, response) {
     });
 });
 
-Parse.Cloud.afterSave("Interested", function (request, response) {
-    var interestedObject = request.object;
-    if (interestedObject.get("isDeleted") != true) {
-        createChat(interestedObject);
-    } else {
-        let requester = interestedObject.get("user");
-        var chat;
-
-        request.object.get("post").fetch().then(function (postResult) {
-            return fetchScheme(postResult, postResult.get("author"), requester);
-        }).then(function (scheme) {
-            chat = scheme[0].get("chat");
-            return updateObjectForDelete(scheme[0]);
-        }).then(function (success) {
-            return updateObjectForDelete(chat);
-        }).then(function (success) {
-            response.success(success);
-        }, function (err) {
-            response.error("ERROR" + err)
-
-        });
-    }
-});
-
 var updateObjectForDelete = function (object) {
     object.set("isDeleted", true)
     return object.save();
@@ -238,6 +214,16 @@ var fetchProfile = function (profileId) {
     return query.find();
 };
 
+function saveScheme(scheme) {
+    scheme.save({
+        success: function (newScheme) {
+            response.success(newScheme);
+        }, error: function (err) {
+            response.error("Error: " + error.code + " " + error.message);
+        }
+    });
+}
+
 function createScheme(chat) {
     var SchemeObject = Parse.Object.extend("Scheme");
     var scheme = new SchemeObject();
@@ -257,6 +243,59 @@ function createScheme(chat) {
         });
     });
 }
+
+Parse.Cloud.afterSave("Interested", function (request, response) {
+    var interestedObject = request.object;
+    if (interestedObject.get("isDeleted") != true) {
+        createChat(interestedObject);
+    } else {
+        let requester = interestedObject.get("user");
+        var chat;
+
+        request.object.get("post").fetch().then(function (postResult) {
+            return fetchScheme(postResult, postResult.get("author"), requester);
+        }).then(function (scheme) {
+            chat = scheme[0].get("chat");
+            return updateObjectForDelete(scheme[0]);
+        }).then(function (success) {
+            return updateObjectForDelete(chat);
+        }).then(function (success) {
+            response.success(success);
+        }, function (err) {
+            response.error("ERROR" + err)
+
+        });
+    }
+});
+
+Parse.Cloud.afterSave("Evaluation", function (request, response) {
+    var evaluatedObject = request.object;
+    var profileObject;
+    var requestProfile = request.user.get("profile");
+
+    request.object.get("scheme").fetch().then(function (schemeResult) {
+        var schemeRequester = schemeResult.get("requester")
+        var schemeOwner = schemeResult.get("owner");
+        
+        if (schemeOwner.id == requestProfile.id) {
+            schemeResult.set("ownerEvaluated", true);
+        } else {
+            schemeResult.set("requesterEvaluated", true);
+        }
+
+        if (schemeResult.get("ownerEvaluated") == true && schemeResult.get("requesterEvaluated") == true) {
+            fetchStatus("Finished").then(function (status) {
+                schemeResult.set("status", status[0]);
+                saveScheme(schemeResult);
+            });
+        } else {
+            fetchStatus("Evaluation").then(function (status) {
+                schemeResult.set("status", status[0]);
+                saveScheme(schemeResult);
+            });
+        }
+    });
+});
 
 Parse.Cloud.afterSave("Message", function (request, response) {
     var messageObject = request.object

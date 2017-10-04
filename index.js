@@ -29,7 +29,7 @@ var api = new ParseServer({
   push: PushNotificationsAdapter,
   filesAdapter: FileStorageAdapter,
   liveQuery: {
-    classNames: ['Comment', 'Like', 'Recommended', 'Chat', 'Message', 'Profile', 'Scheme', 'Interested', 'Notification', 'Follow']
+    classNames: ['Comment', 'Post', 'Like', 'Recommended', 'Chat', 'Message', 'Profile', 'Scheme', 'Interested', 'Notification', 'Follow']
   },
   allowClientClassCreation: true
 });

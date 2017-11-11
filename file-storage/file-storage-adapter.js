@@ -9,7 +9,8 @@ console.log("Current version:" + process.env.NODE_ENV)
  } else { 
      bucketName = "boomerang-dev";
  }
-
+ console.log("Bucket name " + bucketName);
+ 
 
 var gcsAdapter = new GCSAdapter('999065181840', 
 								'./file-storage/resources/Boomerang-ba226c3a289a.json', 

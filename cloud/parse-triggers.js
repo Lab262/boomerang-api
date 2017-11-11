@@ -348,7 +348,8 @@ Parse.Cloud.afterSave("Notification", function (request, response) {
         Parse.Push.send({
             where: pushQuery,
             data: {
-                alert: notificationDescription
+                alert: notificationDescription,
+                badge: "Increment"
             }
         }, {
                 useMasterKey: true

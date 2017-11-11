@@ -1,6 +1,7 @@
 var GCSAdapter = require('parse-server-gcs-adapter');
 
 var bucketName = "";
+console.log("Current version:" + process.env.NODE_ENV)
  if (process.env.NODE_ENV == "production") {     
     bucketName = "boomerang-production";
  } else if (process.env.NODE_ENV == "test") { 

@@ -33,17 +33,17 @@ Parse.Cloud.afterSave("Scheme", function (request, response) {
     }).then(function (statusResult) {
         let status = statusResult.get("status")
         if (status == "Negotiation") {
-            createNotification(notificationColunms, response, "entrou na sua lista de espera");
+            createNotification(notificationColunms, response, "entrou na sua lista de espera", "waitingList");
         } else if (status == "Progress") {
             notificationColunms["receiver"] = sender
             notificationColunms["sender"] = receiver
             notificationColunms["scheme"] = request.object;
-            createNotification(notificationColunms, response, "aceitou entrar em um esquema com você");
+            createNotification(notificationColunms, response, "aceitou entrar em um esquema com você","scheme");
         } else {
             notificationColunms["receiver"] = sender
             notificationColunms["sender"] = receiver
             notificationColunms["scheme"] = request.object;
-            createNotification(notificationColunms, response, "finalizou um esquema com você");
+            createNotification(notificationColunms, response, "finalizou um esquema com você","scheme");
         }
     }, function (err) {
         response.error("ERROR" + err)
@@ -68,7 +68,7 @@ Parse.Cloud.afterSave("Comment", function (request, response) {
             return
         }
         notificationColunms["sender"] = senderResult
-        createNotification(notificationColunms, response, "comentou em seu post.");
+        createNotification(notificationColunms, response, "comentou em seu post.","postUpdate");
     }, function (err) {
         response.error("ERROR" + err)
     });
@@ -92,19 +92,19 @@ Parse.Cloud.afterSave("Recommended", function (request, response) {
     }).then(function (senderResult) {
         notificationColunms["sender"] = senderResult
         let message = "Recomendou " + titlePost;
-        createNotification(notificationColunms, response, message);
+        createNotification(notificationColunms, response, message,"recommendation");
     }, function (err) {
         response.error("ERROR" + err)
     });
 });
 
-function createNotification(notificationColunms, response, message) {
+function createNotification(notificationColunms, response, message,category) {
     var NotificationObject = Parse.Object.extend("Notification");
     var notification = new NotificationObject();
     notificationColunms["hasBeenSeen"] = false;
     notificationColunms["isDeleted"] = false;
     notificationColunms["notificationDescription"] = message
-
+    notificationColunms["notificationCategory"] = category    
     for (colunm in notificationColunms) {
         notification.set(colunm, notificationColunms[colunm]);
     }
@@ -276,7 +276,7 @@ Parse.Cloud.afterSave("Evaluation", function (request, response) {
     request.object.get("scheme").fetch().then(function (schemeResult) {
         var schemeRequester = schemeResult.get("requester")
         var schemeOwner = schemeResult.get("owner");
-        
+
         if (schemeOwner.id == requestProfile.id) {
             schemeResult.set("ownerEvaluated", true);
         } else {
@@ -329,7 +329,6 @@ Parse.Cloud.afterSave("Message", function (request, response) {
     });
 });
 
-
 Parse.Cloud.afterSave("Notification", function (request, response) {
     var notificationObject = request.object
     if (notificationObject.get("isDeleted") == true) {
@@ -349,7 +348,10 @@ Parse.Cloud.afterSave("Notification", function (request, response) {
             where: pushQuery,
             data: {
                 alert: notificationDescription,
-                badge: "Increment"
+                badge: "Increment",
+                category: notificationObject.get("notificationCategory"),
+                postId: notificationObject.get("post"),
+                schemeId: notificationObject.get("scheme")
             }
         }, {
                 useMasterKey: true
@@ -360,6 +362,26 @@ Parse.Cloud.afterSave("Notification", function (request, response) {
             });
     });
 });
+
+// Parse.Cloud.define("testNotification", function (request, response) {
+//     var pushQuery = new Parse.Query(Parse.Installation);
+//     // pushQuery.matchesQuery('user', "LZ1SKW1sFh");
+//     Parse.Push.send({
+//         where: pushQuery,
+//         data: {
+//             alert: "test",
+//             badge: "Increment",
+//             category: "newPost",
+//             postId: {"__type":"Pointer","className":"Post","objectId":"WAyvBd5jiC"},
+//             schemeId: {"__type":"Pointer","className":"Scheme","objectId":"r0YOpSubVW"}    },
+//     }, {
+//             useMasterKey: true
+//         }).then(function () {
+//             response.success();
+//         }).catch(function (err) {
+//             response.error("ERROR" + err);
+//         });
+// });
 
 Parse.Cloud.define("otherUsers", function (request, response) {
     var query = new Parse.Query("Follow");
@@ -390,41 +412,41 @@ Parse.Cloud.define("validatePromoCode", function (request, response) {
     var innerQuery = new Parse.Query(PromoCode);
     innerQuery.equalTo("code", requestedPromoCode);
     var query = new Parse.Query(UserPromoCode);
-    query.matchesQuery("promoCodePointer", innerQuery);    
+    query.matchesQuery("promoCodePointer", innerQuery);
     query.find({
-      success: function(userPromoCodes) {
-        if (userPromoCodes.length > 0 ) {
-            var userPromoCode = userPromoCodes[0];
-            var userGuestPointer = userPromoCode.get("userGuestPointer");
-            if (userGuestPointer != undefined) {
-                response.success({isValid: false, msg: "Outro migo já usou esse código"});
+        success: function (userPromoCodes) {
+            if (userPromoCodes.length > 0) {
+                var userPromoCode = userPromoCodes[0];
+                var userGuestPointer = userPromoCode.get("userGuestPointer");
+                if (userGuestPointer != undefined) {
+                    response.success({ isValid: false, msg: "Outro migo já usou esse código" });
+                } else {
+                    response.success({ isValid: true });
+                }
             } else {
-                response.success({isValid: true});                
+                response.success({ isValid: false, msg: "Este código não existe" });
             }
-        } else {
-            response.success({isValid: false, msg: "Este código não existe"});
         }
-      }
     });
 });
 
-Parse.Cloud.define("averageStars", function(request, response) {
-  fetchProfile(request.params.profileId).then(function (profile) {
-      var query = new Parse.Query("Evaluation");
-      query.equalTo("evaluated", profile[0]);
-      query.find({
-         success: function(results) {
-         var sum = 0;
-         for (var i = 0; i < results.length; ++i) {
-           sum += results[i].get("amountStars");
-         }
-         response.success(sum / results.length);
-     },
-    error: function(err) {
-      response.error(err);
-    }
-   });
-  });
+Parse.Cloud.define("averageStars", function (request, response) {
+    fetchProfile(request.params.profileId).then(function (profile) {
+        var query = new Parse.Query("Evaluation");
+        query.equalTo("evaluated", profile[0]);
+        query.find({
+            success: function (results) {
+                var sum = 0;
+                for (var i = 0; i < results.length; ++i) {
+                    sum += results[i].get("amountStars");
+                }
+                response.success(sum / results.length);
+            },
+            error: function (err) {
+                response.error(err);
+            }
+        });
+    });
 });
 
 

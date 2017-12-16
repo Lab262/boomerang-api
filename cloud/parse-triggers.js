@@ -462,7 +462,7 @@ Parse.Cloud.define("registerPromoCode", function (request, response) {
     
     let newUserPromoCode = new UserPromoCodes();
     newUserPromoCode.set("promoCodePointer",promoCodeObject);
-    newUserPromoCode.set("userGuestPointer",user);
+    newUserPromoCode.set("userGuestPointer",userObject);
     newUserPromoCode.save().then( result => {
         response.success(result);
     }).catch(err => response.error(err))

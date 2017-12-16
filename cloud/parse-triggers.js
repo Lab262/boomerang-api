@@ -438,13 +438,14 @@ Parse.Cloud.define("validatePromoCode", function (request, response) {
     innerQuery.find({
         success: function (promoCodes) {
             if (promoCodes.length > 0) {               
-                    response.success({ isValid: true });
+                response.success({ isValid: true, promoCode: promoCodes[0]});
             } else {
                 response.success({ isValid: false, msg: "Este código não existe" });
             }
         }
     });
 });
+
 Parse.Cloud.define("averageStars", function (request, response) {
     fetchProfile(request.params.profileId).then(function (profile) {
         var query = new Parse.Query("Evaluation");

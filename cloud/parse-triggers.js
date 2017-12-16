@@ -305,7 +305,8 @@ Parse.Cloud.afterSave("Message", function (request, response) {
     }
 
     var receiveUserProfile = messageObject.get('receiver');
-    var receiverUser = new Parse.Query(Parse.User);
+    var user = new Parse.User();
+    user.set("id", "my name");
     receiverUser.equalTo("profile", receiveUserProfile);
     // Find devices associated with these users
     var pushQuery = new Parse.Query(Parse.Installation);
@@ -444,6 +445,28 @@ Parse.Cloud.define("validatePromoCode", function (request, response) {
             }
         }
     });
+});
+
+Parse.Cloud.define("registerPromoCode", function (request, response) {
+    var promoCode = request.params.promoCode;
+    var user = request.params.user;
+    
+    var UserPromoCodes = Parse.Object.extend("UserPromoCodes");
+    
+    var PromoCode = Parse.Object.extend("PromoCode");
+    var promoCodeObject = new PromoCode();
+    promoCodeObject.id = promoCode
+    
+    let userObject = new Parse.User();
+    userObject.id = user;
+    
+    let newUserPromoCode = new UserPromoCodes();
+    newUserPromoCode.set("promoCodePointer",promoCodeObject);
+    newUserPromoCode.set("userGuestPointer",user);
+    newUserPromoCode.save().then( result => {
+        response.success(result);
+    }).catch(err => response.error(err))
+    
 });
 
 Parse.Cloud.define("averageStars", function (request, response) {

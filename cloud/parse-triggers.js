@@ -488,5 +488,26 @@ Parse.Cloud.define("averageStars", function (request, response) {
     });
 });
 
+Parse.Cloud.define("report", function (request, response) {
+    var postObject;
+    fetchPost(request.params.postId).then(function (post) {
+        postObject = post[0];
+        return fetchProfile(request.params.profileId)
+    }).then(function (profile) {
+        var Report = Parse.Object.extend("Report");
+        var report = new Report();
+        report.set("post", postObject);
+        report.set("denouncer", profile[0]);
+        report.set("reason", request.params.reason)
+        report.save({
+            success: function (newNotification) {
+                response.success();
+            }, error: function (err) {
+                response.error("Error: " + error.code + " " + error.message);
+            }
+        });
+    });
+});
+
 
 
